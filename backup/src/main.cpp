@@ -25,14 +25,14 @@ Bmi088Gyro gyro(SPI,BMI_GYR_CS);
 
 void setup(){
   Serial.begin(115200);
-  while(!Serial) delay(10);
+  while(!Serial) delay(1000);
 
   // BMP setup, see https://github.com/adafruit/Adafruit_BMP5xx/blob/main/examples/bmp5xx_test/bmp5xx_test.ino
   // for more config options.
   
   if (!bmp.begin(BMP_CS, &SPI)){
     Serial.println("NO BMP FOUND");
-    while(1) delay(10);
+    while(1) delay(1000);
   }
 
   // LIS setup
@@ -74,4 +74,5 @@ void loop(){
   Serial.print("\t");
   Serial.println(gyro.getGyroX_rads());
   */
+  delay(1000);
 }
