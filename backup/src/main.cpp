@@ -6,6 +6,7 @@
 #include <Adafruit_BMP5xx.h>
 #include <Adafruit_LIS2MDL.h>
 #include <BMI088.h>
+#include <LoRa.h>
 
 // Pin defines - TODO: get actual pins
 #define BMP_CS     0
@@ -47,7 +48,11 @@ void setup(){
   status = accel.begin();
   */
   
-
+  // LoRa Setup
+  if (!LoRa.begin(433E6)) {
+    Serial.println("Starting LoRa failed!");
+    while (1);
+  }
 
 }
 
@@ -74,5 +79,17 @@ void loop(){
   Serial.print("\t");
   Serial.println(gyro.getGyroX_rads());
   */
+
+  // Send telemetry data to ground
+
+  // Declare array of data to send to ground
+  int numOfThingsBeingSent;
+  float data[numOfThingsBeingSent]; // Will have to fill array with what you're sending
+
+  // send data packet to ground
+  LoRa.beginPacket();
+  LoRa.write((byte*)&data, sizeof(data));
+  LoRa.endPacket();
+
   delay(1000);
 }
