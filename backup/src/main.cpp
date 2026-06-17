@@ -94,6 +94,8 @@ void loop() {
   if ((uint32_t)(now - lastLogUs) >= LOG_PERIOD_US) {
     lastLogUs += LOG_PERIOD_US;
     datalogWrite(state, data, guidanceState, phase);
+    Serial.print("Log record #");
+    Serial.println(datalogRecordCount());
   }
 
   if ((uint32_t)(now - lastTelemUs) >= TELEMETRY_PERIOD_US) {
@@ -104,18 +106,18 @@ void loop() {
     }
   }
 
-  if (Serial.available()) {
-    const char cmd = static_cast<char>(Serial.read());
-    if (cmd == 'd' || cmd == 'D') {
-      datalogDump();
-    } else if (cmd == 's' || cmd == 'S') {  // stop & close — commit before removing card
-      datalogClose();
-    } else if (cmd == '&') {  // ASCII 38 — wipe all logs pre-flight
-      if (phase == FlightPhase::IDLE) {
-        datalogEraseAll();
-      } else {
-        Serial.println("erase ignored — only allowed pre-flight (IDLE)");
-      }
-    }
-  }
+  // if (Serial.available()) {
+  //   const char cmd = static_cast<char>(Serial.read());
+  //   if (cmd == 'd' || cmd == 'D') {
+  //     datalogDump();
+  //   } else if (cmd == 's' || cmd == 'S') {  // stop & close — commit before removing card
+  //     datalogClose();
+  //   } else if (cmd == '&') {  // ASCII 38 — wipe all logs pre-flight
+  //     if (phase == FlightPhase::IDLE) {
+  //       datalogEraseAll();
+  //     } else {
+  //       Serial.println("erase ignored — only allowed pre-flight (IDLE)");
+  //     }
+  //   }
+  // }
 }
