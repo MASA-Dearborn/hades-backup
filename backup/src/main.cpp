@@ -6,6 +6,7 @@
 #include "statemachine.h"
 #include "guidance.h"
 #include "telemetry.h"
+#include "datalogger.h"
 
 static float basePressure_hPa;
 static SensorData data = {};
@@ -21,6 +22,7 @@ static uint32_t lastImuUs = 0;
 static uint32_t lastBaroUs = 0;
 static uint32_t lastMagUs = 0;
 static uint32_t lastOuterUs = 0;
+static uint32_t lastLogUs = 0;
 static uint32_t lastTelemUs = 0;
 
 void setup() {
@@ -40,14 +42,21 @@ void setup() {
     Serial.println("LoRa init failed — telemetry disabled");
   }
 
+  if (!datalogInit()) {
+    Serial.println("Datalogging disabled — SD not available");
+  }
+
   uint32_t now = micros();
   lastImuUs = now;
   lastBaroUs = now + 3000;
   lastMagUs = now + 1000;
   lastOuterUs = now + 7000;
+  lastLogUs = now + 5000;
   lastTelemUs = now + 13000;
 
   Serial.println("LoRa telemetry transmitter ready");
+  Serial.println("Post-flight: press 's' to stop & close, then pull SD card (FLTnn.BIN)");
+  Serial.println("Pre-flight:  press '&' to erase all FLT*.BIN logs (IDLE only)");
 }
 
 void loop() {
@@ -82,11 +91,31 @@ void loop() {
     guidanceState = guidance.update(state, data, 0.0f);
   }
 
-  // if ((uint32_t)(now - lastTelemUs) >= TELEMETRY_PERIOD_US) {
-  //   lastTelemUs += TELEMETRY_PERIOD_US;
-  //   Payload pkt = buildTelemetryPacket(state, data, guidanceState, phase);
-  //   if (!telemetrySend(pkt)) {
-  //     Serial.println("LoRa telemetry send failed");
-  //   }
-  // }
+  if ((uint32_t)(now - lastLogUs) >= LOG_PERIOD_US) {
+    lastLogUs += LOG_PERIOD_US;
+    datalogWrite(state, data, guidanceState, phase);
+  }
+
+  if ((uint32_t)(now - lastTelemUs) >= TELEMETRY_PERIOD_US) {
+    lastTelemUs += TELEMETRY_PERIOD_US;
+    Payload pkt = buildTelemetryPacket(state, data, guidanceState, phase);
+    if (!telemetrySend(pkt)) {
+      Serial.println("LoRa telemetry send failed");
+    }
+  }
+
+  if (Serial.available()) {
+    const char cmd = static_cast<char>(Serial.read());
+    if (cmd == 'd' || cmd == 'D') {
+      datalogDump();
+    } else if (cmd == 's' || cmd == 'S') {  // stop & close — commit before removing card
+      datalogClose();
+    } else if (cmd == '&') {  // ASCII 38 — wipe all logs pre-flight
+      if (phase == FlightPhase::IDLE) {
+        datalogEraseAll();
+      } else {
+        Serial.println("erase ignored — only allowed pre-flight (IDLE)");
+      }
+    }
+  }
 }

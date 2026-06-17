@@ -21,6 +21,9 @@
 #define LORA_TX_POWER_DBM 20
 
 #define TELEMETRY_PERIOD_US 100000UL  // 10 Hz
+#define LOG_PERIOD_US 20000UL                   // 50 Hz binary flight log
+#define DATALOG_FLUSH_INTERVAL 100              // records between fsync (~2 s at 50 Hz)
+#define LOG_PREALLOC_BYTES (8UL * 1024 * 1024)  // contiguous reserve on SD
 
 #define IMU_PERIOD_US 5000UL
 #define BARO_PERIOD_US 20000UL
